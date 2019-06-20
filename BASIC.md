@@ -11,7 +11,7 @@ VariableBool - A bool stands for boolean, and this is a type that is either true
 VariablePlayer - Player data is saved within this variable
 VariableTitan - Titan data is saved within this variable
 
-**Variables are case sensitive, so keep that in mind!
+**Variables are case sensitive, so keep that in mind!**
 
 # Configuration
 
