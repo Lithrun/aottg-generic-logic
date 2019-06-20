@@ -4,8 +4,8 @@ Generic logic is Expedition Mod Custom Logic which is made as generic as possibl
 The expedition mod can be downloaded here: https://discord.gg/UTpXD5Q
 This custom logic is daily used within the Expeditions Beyond the Walls Community: https://discord.gg/Xd9sS8J
 
-Please view the Basic.md here for basic instructions how the custom logic works.
-Please see the Advanced.md if you wish to make use of the extension methods that the generic logic has to offer.
+Please view the Basic.md here for basic instructions how the custom logic works: https://github.com/Nickernator/aottg-generic-logic/blob/master/BASIC.md
+Please see the Advanced.md if you wish to make use of the extension methods that the generic logic has to offer: https://github.com/Nickernator/aottg-generic-logic/blob/master/ADVANCED.md
 
 # Acknowledgements
 This custom logic was primarily developed by me, Nickernator or as most know me within AoTTG: Erwin Smith. I want to give my special thanks to: Syeo, Potaato, Axel, AnnieSwe and Marazul for their contributions and ideas. Even more special thanks to Tic, as without the Expedition Mod custom logic would have never been able to become this advanced.
