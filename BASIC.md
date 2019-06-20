@@ -137,3 +137,28 @@ With option commands you can change any of the toggable settings that we discuss
 Revive commands all you to dynamically revive players. You don't need to setup regions anymore thanks to this system.
 
 * /setrev - This command sets a revive point at the current location of the MCPlayer (As discussed earlier at basic commands, this is either the actual MC or a player assigned with /mcsetnew)
+* /revpos - This will revive all players at the location defined in /setrev
+* /setrevauto - This works the same as /setrev, but will revive players automatically every 30 seconds.
+* /dsetrevauto - This command will stop the automatic respawn from /setrevauto.
+* /revmc - This command will revive everyone at the MCPlayer
+
+## Titan Commands
+
+Titans are random thanks to this generic logic. Their configuration is defined as we discussed at the Titan Configuration.
+
+* /titansX - This will spawn X titans within the dynamic region (See the region commands section for details). X is a number between 1 to 50.
+* /tptitans - This will teleport **all** titans to the dynamic region.
+
+## Region Commands
+
+Region Commands contain the logic for the praised dynamic region logic. In the past you had to add a lot of regions within your map to have some titans, with dynamic regions, titans get spawned dynamically based upon the MCPlayer location. This allows you to have titans at every map and is the main feature of this logic.
+
+The location is based upon X+, X-, Y+ and Y- of the MCPlayer's current location.
+
+* /checkregion - This will display the current positive and negative X&Y coordinates of the dynamic region.
+
+*Capital X is a number between -10000 and 10000*
+* /setxpX - This will set the X positive coordinate
+* /setypX - This will set the Y positive coordinate
+* /setxnX - This will set the X negative coordinate
+* /setynX - This will set the Y negative coordinate
