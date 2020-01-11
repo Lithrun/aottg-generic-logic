@@ -8,14 +8,14 @@ Please view the Basic.md here for basic instructions how the custom logic works:
 Please see the Advanced.md if you wish to make use of the extension methods that the generic logic has to offer: https://github.com/Nickernator/aottg-generic-logic/blob/master/ADVANCED.md
 
 # Acknowledgements
-This custom logic was primarily developed by me, Nickernator or as most know me within AoTTG: Erwin Smith. I want to give my special thanks to: Syeo, Potaato, Axel, AnnieSwe and Marazul for their contributions and ideas. Even more special thanks to Tic, as without the Expedition Mod custom logic would have never been able to become this advanced.
+This custom logic was primarily developed by me, Lithrun or as most know me within AoTTG: Erwin Smith. I want to give my special thanks to: Syeo, Potato, Axel and Marazul for their contributions and ideas. Even more special thanks to Tic, as without the Expedition Mod custom logic would have never been able to become this advanced.
 
 # Terms and Conditions
 1. Do not alter the /credits message. People worked hard on their contributions without any form of compensation. Credit them respectively.
 2. You are free to modify the custom logic based upon your needs. You most likely would only need to change parameters at the OnRoundStart(). If you wish to modify commands, which also benefits others, rather make a pull request.
 
 # Updates and feature requests
-If you notice any issues or want to request a feature, please make use of the tools that Github has available for those. The items that are to be suggested, will be to be applyable in a generic way, as otherwise it is just map specific and doesn't belong inside the generic logic.
+If you notice any issues or want to request a feature, please make use of the tools that Github has available for those. The items that are to be suggested, will have to be applyable in a generic way, as otherwise it is just map specific and doesn't belong inside the generic logic.
 
 If you wish to implement something yourself, make use of pull requests please.
 
