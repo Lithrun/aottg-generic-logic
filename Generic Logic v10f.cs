@@ -4,7 +4,7 @@
 // Latest version available at: https://github.com/Lithrun/aottg-generic-logic
 
 // TERMS AND CONDITIONS
-// 1. Do not alter the /credits command. The people worked hard on this logic, and removing their effort is disrespectfull.
+// 1. Do not alter the OnRoundStart message. The people worked hard on this logic, and removing their effort is disrespectfull.
 // 2. You're free to modify this logic based on your needs. It is advised however to only modify the OnRoundStart and adding additional commands at the OnChatInput
 // 3. For code improvements and new featuers, please pop a pull request at https://github.com/Lithrun/aottg-generic-logic
 
