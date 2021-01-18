@@ -1,4 +1,4 @@
-// Generic custom logic v10 by Erwin Smith#6637 / Lithrun
+// Generic custom logic v11 by Erwin Smith#6637 / Lithrun
 // This logic was made for the Expeditions Beyond the Walls community (https://discord.gg/Xd9sS8J)
 // Made with love, patience and chocolate milk <3
 // Latest version available at: https://github.com/Lithrun/aottg-generic-logic
@@ -27,9 +27,9 @@ OnRoundStart()
   VariableBool.Set("EnableWagonNuke", false); // While set to true, everyone will die once the MC dies
 
 // Credits message. Do not alter.
-  Game.PrintMessage("<size=15><color=#2ecc71>Generic logic v10 loaded</color></size>");
+  Game.PrintMessage("<size=15><color=#2ecc71>Generic logic v11 loaded</color></size>");
   Game.PrintMessage("<size=12><color=#123456>Created with passion and love by Erwin Smith#6637</color></size>");
-  Game.PrintMessage("<size=12><color=#654321>Special thanks to Syeo Potato Axel Tic & Marazul</color></size>");   
+  Game.PrintMessage("<size=12><color=#654321>Special thanks to Syeo Potato Axel Tic P2 & Marazul</color></size>");   
  
 // Timer message - Credits to Potato
   VariableString.Set("0", "<b><color=#00FF00>[Commander]</color>: Advance  In 10 Seconds!</b>");
@@ -439,6 +439,17 @@ VariableInt.Set("SantaCounter", 0);
 VariableInt.Set("WagonNukeCounter", 10);
 VariableBool.Set("DestroyLife", false);
 
+//V11 Medic Overhaul
+    //------Gobal Counter---------
+    VariableInt.Set("timeCounter", 0);
+
+    //------------Init------------
+    VariableBool.Set("firstestRun", true);
+    VariableBool.Set("runScript", false);
+
+    //----------First Run----------
+    VariableBool.Set("firstRun", true);
+
 Game.PrintMessage("EM/Commands//startup"); // Execute a few commands on start up
 }
 
@@ -771,20 +782,9 @@ VariableInt.Set("BeastCounter", 0);
 }
 
 
-
-
-If(Bool.Equals(VariableBool("EnableAntiSkating"), true))
-{
-If(Float.LessThan(VariableFloat("SpeedCounter"), VariableFloat("SpeedCounterLimit")))
-{
-VariableFloat.Add("SpeedCounter", 1.0);
-}
-If(Float.Equals(VariableFloat("SpeedCounter"), VariableFloat("SpeedCounterLimit")))
-{
-VariableFloat.Set("SpeedCounter", 0.0);
-}
 }
 
+// Wagon nuke
 If(Bool.Equals(VariableBool("EnableWagonNuke"), true))
 {
 If(Bool.Equals(VariableBool("DestroyLife"), false)) 
@@ -817,82 +817,630 @@ VariableBool.Set("EnableWagonNuke", false);
 }
 }
 
-VariableInt.Set("counterPlayer", 0);
-    VariablePlayer.Set("player", VariablePlayer("null"));
-    ForeachPlayer("player")
+// MEDIC LOGIC
+    //setting up automatic initiate
+    //this is per player, meaning you need to change it for you specifically
+    If(Bool.Equals(VariableBool("firstestRun"), true))
     {
-        VariableString.Concat("xDir","x",VariableInt("counterPlayer").ConvertToString());
-        VariableString.Concat("yDir","y",VariableInt("counterPlayer").ConvertToString());
-        VariableString.Concat("zDir","z",VariableInt("counterPlayer").ConvertToString());
-        VariableString.Concat("revDir","rev",VariableInt("counterPlayer").ConvertToString());
-        VariableString.Concat("deathDir","death",VariableInt("counterPlayer").ConvertToString());
-        VariableString.Concat("cooldownDirMain","cooldown",VariableInt("counterPlayer").ConvertToString());
-        If(Bool.Equals(VariablePlayer("player").GetIsAlive(), true))
+        VariablePlayer.Set("player", VariablePlayer("null"));
+        ForeachPlayer("player")
         {
-            VariableFloat.Set("x", VariablePlayer("player").GetPositionX());
-            VariableFloat.Set("y", VariablePlayer("player").GetPositionY());
-            VariableFloat.Set("z", VariablePlayer("player").GetPositionZ());
-            If(Float.NotEquals(VariableFloat("x"), 0.0))
-            {
-            VariableFloat.Set(VariableString("xDir"), VariableFloat("x"));
-            }
-            If(Float.NotEquals(VariableFloat("y"), 0.0))
-            {
-            VariableFloat.Set(VariableString("yDir"), VariableFloat("y"));
-            }
-            If(Float.NotEquals(VariableFloat("z"), 0.0))
-            {
-            VariableFloat.Set(VariableString("zDir"), VariableFloat("z"));
-            }
-            VariableInt.Set(VariableString("revDir"), 0);
-            VariableInt.Set(VariableString("deathDir"), 0);
-        }  
-        If(Bool.Equals(VariablePlayer("player").GetIsAlive(), false))
+            VariablePlayer.Set("mc", VariablePlayer("player"));
+        }
+        //this part of the logic will attempt to strip the whitespace character from your name
+        //GetName() can be GetGuildName(), whichever one has a space in it
+        //i will use GetName(), since my in game name is "[8c002c]Player 2[ffffff]", which contains a space
+        VariableString.Set("char63SetName", VariablePlayer("mc").GetName());
+        //setting the first part of the name, before the whitespace
+        VariableString.Set("priorNamePart", "[8c002c]Player");
+        //setting the second part of the name, after the whitespace
+        VariableString.Set("anteriorNamePart", "2[ffffff]");
+        //seeing if mc name matches both name parts
+        VariableBool.Set("else", true);
+        If(String.StartsWith(VariableString("char63SetName"), VariableString("priorNamePart")))
         {
-            If(Int.LessThan(VariableInt(VariableString("deathDir")), VariableInt("deathTime")))
+            If(String.EndsWith(VariableString("char63SetName"), VariableString("anteriorNamePart")))
             {
-                VariableInt.Set("counterPlayerMedic", 0);
-                VariablePlayer.Set("playerMedic", VariablePlayer("null"));
-                ForeachPlayer("playerMedic")
+                //removing name parts
+                VariableString.Replace("char63SetName", VariableString("priorNamePart"), "");
+                VariableString.Replace("char63SetName", VariableString("anteriorNamePart"), "");
+                //setting whitespace char
+                VariableString.Set("char63", VariableString("char63SetName"));
+                //gogogogo
+                VariableBool.Set("runScript", true);
+                VariableBool.Set("else", false);
+            }
+        }
+        //if name doesn't match
+        If(Bool.Equals(VariableBool("else"), true))
+        {
+            Game.PrintMessage("Please<size=1>____</size>type<size=1>____</size>'/init<size=1>____</size>'<size=1>____</size>to<size=1>____</size>initialize<size=1>____</size>the<size=1>____</size>medic<size=1>____</size>script");
+            Game.PrintMessage("Include<size=1>____</size>the<size=1>____</size>space");
+        }
+        //
+        VariableBool.Set("firstestRun", false);
+    }
+    //-----------Init-------------
+    If(Bool.Equals(VariableBool("runScript"), true))
+    {
+        //----------First Run----------
+        If(Bool.Equals(VariableBool("firstRun"), true))
+        {
+            VariableBool.Set("firstRun", false);
+
+            //----Player Tracker-----
+            VariableInt.Set("knownPlayerCounter", 0);
+            VariableFloat.Set("playerStartingCoordsX", 0.0);
+            VariableFloat.Set("playerStartingCoordsY", -999999.0);
+            VariableFloat.Set("playerStartingCoordsZ", 0.0);
+
+            //-------Medic Variables-------
+            VariableString.Set("medicHex", "[1fcfc1][1fcfc1]");
+            VariableFloat.Set("flareRotationX", -0.1);
+            VariableString.Concat("flareRotation", VariableFloat("flareRotationX").ConvertToString(), "[-]0[-]0[-]1");
+            VariableInt.Set("defaultLives", 5);
+            VariableInt.Set("defaultReviveKits", 20);
+            VariableInt.Set("cooldown", 10);
+            VariableInt.Set("revTime", 20);
+            VariableInt.Set("deathTime", 120);
+            VariableFloat.Set("radius", 50.0);
+            VariableBool.Set("deathMarker", true);
+            VariableBool.Set("resetPlayerVarsOnMCRev", false);
+
+            //--------Medic Objects------------
+            //cheers mara
+            VariableString.Set("redFlare", "EM/Commands/object_load[-]Resources[-]fx/flarebullet2");
+            Game.PrintMessage(VariableString("redFlare"));
+
+            //-------Hex Stripper Variables---------
+            VariableString.Set("char0", "0");
+            VariableString.Set("char1", "1");
+            VariableString.Set("char2", "2");
+            VariableString.Set("char3", "3");
+            VariableString.Set("char4", "4");
+            VariableString.Set("char5", "5");
+            VariableString.Set("char6", "6");
+            VariableString.Set("char7", "7");
+            VariableString.Set("char8", "8");
+            VariableString.Set("char9", "9");
+            VariableString.Set("char10", "a");
+            VariableString.Set("char11", "b");
+            VariableString.Set("char12", "c");
+            VariableString.Set("char13", "d");
+            VariableString.Set("char14", "e");
+            VariableString.Set("char15", "f");
+            VariableString.Set("char16", "A");
+            VariableString.Set("char17", "B");
+            VariableString.Set("char18", "C");
+            VariableString.Set("char19", "D");
+            VariableString.Set("char20", "E");
+            VariableString.Set("char21", "F");
+            VariableString.Set("char22", "g");
+            VariableString.Set("char23", "h");
+            VariableString.Set("char24", "i");
+            VariableString.Set("char25", "j");
+            VariableString.Set("char26", "k");
+            VariableString.Set("char27", "l");
+            VariableString.Set("char28", "m");
+            VariableString.Set("char29", "n");
+            VariableString.Set("char30", "o");
+            VariableString.Set("char31", "p");
+            VariableString.Set("char32", "q");
+            VariableString.Set("char33", "r");
+            VariableString.Set("char34", "s");
+            VariableString.Set("char35", "t");
+            VariableString.Set("char36", "u");
+            VariableString.Set("char37", "v");
+            VariableString.Set("char38", "w");
+            VariableString.Set("char39", "x");
+            VariableString.Set("char40", "y");
+            VariableString.Set("char41", "z");
+            VariableString.Set("char42", "G");
+            VariableString.Set("char43", "H");
+            VariableString.Set("char44", "I");
+            VariableString.Set("char45", "J");
+            VariableString.Set("char46", "K");
+            VariableString.Set("char47", "L");
+            VariableString.Set("char48", "M");
+            VariableString.Set("char49", "N");
+            VariableString.Set("char50", "O");
+            VariableString.Set("char51", "P");
+            VariableString.Set("char52", "Q");
+            VariableString.Set("char53", "R");
+            VariableString.Set("char54", "S");
+            VariableString.Set("char55", "T");
+            VariableString.Set("char56", "U");
+            VariableString.Set("char57", "V");
+            VariableString.Set("char58", "W");
+            VariableString.Set("char59", "X");
+            VariableString.Set("char60", "Y");
+            VariableString.Set("char61", "Z");
+            VariableString.Set("char62", "'");
+
+            //
+        
+            //-----print-----
+            VariableString.Concat("scriptInitialized", "Script", VariableString("char63"), "initialized");
+            Game.PrintMessage(VariableString("scriptInitialized"));
+        }
+
+        //-------Player Tracker---------
+        VariablePlayer.Set("player", VariablePlayer("null"));
+        ForeachPlayer("player")
+        {
+            //-------seeing if player matches any from known player directory---------------
+            VariableBool.Set("currentPlayerIsKnown", false);
+            VariableInt.Set("i", 0);
+            While(Int.LessThan(VariableInt("i"), VariableInt("knownPlayerCounter")))
+            {
+                VariableString.Concat("testKnownPlayerDir", "player", VariableInt("i").ConvertToString());
+                VariableBool.Set("else", true);
+                If(Player.Equals(VariablePlayer("player"), VariablePlayer(VariableString("testKnownPlayerDir"))))
                 {
-                    VariableString.Concat("cooldownDirSub","cooldown",VariableInt("counterPlayer").ConvertToString());
-                    If(Player.NotEquals(VariablePlayer("player"), VariablePlayer("playerMedic")))
+                    VariableBool.Set("currentPlayerIsKnown", true);
+                    VariableBool.Set("else", false);
+                }
+                If(Bool.Equals(VariableBool("else"), true))
+                {
+                    //ensuring that this player isn't still in game, so that more that 2 or more players can't be matched  to same player vars
+                    VariableString.Concat("currentPlayerIsInGameDir", VariableString("testKnownPlayerDir"), "IsInGame");
+                    If(Bool.Equals(VariableBool(VariableString("currentPlayerIsInGameDir")), false))
                     {
-                        If(String.Equals(VariablePlayer("playerMedic").GetGuildName(), "[ffffff][ffffff]Medic"))
+                        //seeing if not in game player has matching name
+                        VariableString.Concat("currentPlayerRawNameDir", VariableString("testKnownPlayerDir"), "RawName");
+                        If(String.Equals(VariablePlayer("player").GetName(), VariableString(VariableString("currentPlayerRawNameDir"))))
                         {
-                            If(Bool.Equals(VariablePlayer("playerMedic").GetIsAlive(), true))
+                            //player is recognized, and is restored
+                            VariablePlayer.Set(VariableString("testKnownPlayerDir"), VariablePlayer("player"));
+                            VariableBool.Set("currentPlayerIsKnown", true);
+                            VariableString.Concat("currentPlayerHasBeenDeadForDir", VariableString("testKnownPlayerDir"), "HasBeenDeadFor");
+                            If(Int.Equals(VariableInt(VariableString("currentPlayerHasBeenDeadForDir")), 0))
                             {
-                                If(Int.LessThanOrEqual(VariableInt(VariableString("cooldownDirSub")), 0))
+                                VariableString.Concat("currentPlayerAttemptToReviveDir", VariableString("testKnownPlayerDir"), "AttemptToRevive");
+                                VariableBool.Set(VariableString("currentPlayerAttemptToReviveDir"), true);
+                            }
+                        }
+                    }
+                }
+                VariableInt.Add("i", 1);
+            }
+            //---------adding unknown player to known player directory------------
+            If(Bool.Equals(VariableBool("currentPlayerIsKnown"), false))
+            {
+                //adding player variable to directory
+                VariableString.Concat("currentPlayerDir", "player", VariableInt("knownPlayerCounter").ConvertToString());
+                VariablePlayer.Set(VariableString("currentPlayerDir"), VariablePlayer("player"));
+                //additional player variable directories setup - mostly informational
+                //-----------general-------------
+                //names
+                VariableString.Concat("currentPlayerRawNameDir", VariableString("currentPlayerDir"), "RawName");
+                VariableString.Set(VariableString("currentPlayerRawNameDir"), "null");
+                VariableString.Concat("currentPlayerPrintableNameDir", VariableString("currentPlayerDir"), "PrintableName");
+                VariableString.Set(VariableString("currentPlayerPrintableNameDir"), "null");
+                VariableString.Concat("currentPlayerParsableNameDir", VariableString("currentPlayerDir"), "ParsableName");
+                VariableString.Set(VariableString("currentPlayerParsableNameDir"), "null");
+                //player coordinates
+                VariableString.Concat("currentPlayerXDir", VariableString("currentPlayerDir"), "X");
+                VariableFloat.Set(VariableString("currentPlayerXDir"), VariableFloat("playerStartingCoordsX"));
+                VariableString.Concat("currentPlayerYDir", VariableString("currentPlayerDir"), "Y");
+                VariableFloat.Set(VariableString("currentPlayerYDir"), VariableFloat("playerStartingCoordsY"));
+                VariableString.Concat("currentPlayerZDir", VariableString("currentPlayerDir"), "Z");
+                VariableFloat.Set(VariableString("currentPlayerZDir"), VariableFloat("playerStartingCoordsZ"));
+                //handler
+                VariableString.Concat("currentPlayerIsInGameDir", VariableString("currentPlayerDir"), "IsInGame");
+                VariableBool.Set(VariableString("currentPlayerIsInGameDir"), false);
+                //-----------Advanced Tracker--------------
+                //rejoin
+                VariableString.Concat("currentPlayerAttemptToReviveDir", VariableString("currentPlayerDir"), "AttemptToRevive");
+                VariableBool.Set(VariableString("currentPlayerAttemptToReviveDir"), false);
+                //-----------medic-----------
+                //medic
+                VariableString.Concat("currentPlayerIsMedicDir", VariableString("currentPlayerDir"), "IsMedic");
+                VariableBool.Set(VariableString("currentPlayerIsMedicDir"), false);
+                If(String.Contains(VariablePlayer(VariableString("currentPlayerDir")).GetGuildName(), VariableString("medicHex")))
+                {
+                    VariableBool.Set(VariableString("currentPlayerIsMedicDir"), true);
+                }
+                VariableString.Concat("currentPlayerMedicCooldownDir", VariableString("currentPlayerDir"), "MedicCooldown");
+                VariableInt.Set(VariableString("currentPlayerMedicCooldownDir"), 0);
+                VariableString.Concat("currentPlayerReviveChargeDir", VariableString("currentPlayerDir"), "ReviveCharge");
+                VariableInt.Set(VariableString("currentPlayerReviveChargeDir"), 0);
+                VariableString.Concat("currentPlayerReviveKitsUsedDir", VariableString("currentPlayerDir"), "ReviveKitsUsed");
+                VariableInt.Set(VariableString("currentPlayerReviveKitsUsedDir"), 0);
+                VariableString.Concat("currentPlayerReviveTargetDir", VariableString("currentPlayerDir"), "ReviveTarget");
+                VariableString.Set(VariableString("currentPlayerReviveTargetDir"), "null");
+                //player rev stats
+                VariableString.Concat("currentPlayerIsBeingRevivedDir", VariableString("currentPlayerDir"), "IsBeingRevived");
+                VariableBool.Set(VariableString("currentPlayerIsBeingRevivedDir"), false);
+                VariableString.Concat("currentPlayerTimesRevivedByMedicDir", VariableString("currentPlayerDir"), "TimesRevivedByMedic");
+                VariableInt.Set(VariableString("currentPlayerTimesRevivedByMedicDir"), 0);
+                VariableString.Concat("currentPlayerHasBeenDeadForDir", VariableString("currentPlayerDir"), "HasBeenDeadFor");
+                VariableInt.Set(VariableString("currentPlayerHasBeenDeadForDir"), 0);
+                VariableString.Set("currentPlayerDeathWasAnnouncedDir", VariableString("currentPlayerDir"), "DeathWasAnnounced");
+                VariableBool.Set(VariableString("currentPlayerDeathWasAnnouncedDir"), true);
+                VariableString.Concat("currentPlayerDeathIsMarkedDir", VariableString("currentPlayerDir"), "DeathIsMarked");
+                VariableBool.Set(VariableString("currentPlayerDeathIsMarkedDir"), true);
+                //---------counter-----------
+                VariableInt.Add("knownPlayerCounter", 1);
+            }
+        }
+        //-----------Player Updater-----------
+        VariableInt.Set("knownPlayerUpdateLoopCounter", 0);
+        While(Int.LessThan(VariableInt("knownPlayerUpdateLoopCounter"), VariableInt("knownPlayerCounter")))
+        {
+            VariableString.Concat("currentPlayerDir", "player", VariableInt("knownPlayerUpdateLoopCounter").ConvertToString());
+            //is in game
+            VariableString.Concat("currentPlayerIsInGameDir", VariableString("currentPlayerDir"), "IsInGame");
+            VariableBool.Set(VariableString("currentPlayerIsInGameDir"), false);
+            VariablePlayer.Set("player", VariablePlayer("null"))
+            ForeachPlayer("player")
+            {
+                If(Player.Equals(VariablePlayer("player"), VariablePlayer(VariableString("currentPlayerDir"))))
+                {
+                    VariableBool.Set(VariableString("currentPlayerIsInGameDir"), true);
+                }
+            }
+            If(Bool.Equals(VariableBool(VariableString("currentPlayerIsInGameDir")), true))
+            {
+                VariableString.Concat("currentPlayerXDir", VariableString("currentPlayerDir"), "X");
+                VariableString.Concat("currentPlayerYDir", VariableString("currentPlayerDir"), "Y");
+                VariableString.Concat("currentPlayerZDir", VariableString("currentPlayerDir"), "Z");
+                //---------update name--------------
+                VariableString.Concat("currentPlayerRawNameDir", VariableString("currentPlayerDir"), "RawName");
+                If(String.NotEquals(VariablePlayer(VariableString("currentPlayerDir")).GetName(), VariableString(VariableString("currentPlayerRawNameDir"))))
+                {
+                    VariableString.Set(VariableString("currentPlayerRawNameDir"), VariablePlayer(VariableString("currentPlayerDir")).GetName());
+                    //hex stripper --- for names
+                    VariableString.Set("playerName", VariableString(VariableString("currentPlayerRawNameDir")));
+                    VariableInt.Set("playerPartCounter", 0);
+                    VariableString.Concat("playerABCDir", "playerABC", VariableInt("playerPartCounter").ConvertToString())
+                    VariableString.Set(VariableString("playerABCDir"), "")
+                    VariableInt.Set("ABCCounterMaster", 0);
+                    While(Int.LessThan(VariableInt("ABCCounterMaster"), 30))
+                    {
+                        VariableInt.Set("ABCCounter", 0);
+                        While(Int.LessThan(VariableInt("ABCCounter"), 64))
+                        {
+                            VariableString.Concat("charDir", "char", VariableInt("ABCCounter").ConvertToString());
+                            If(String.StartsWith(VariableString("playerName"), VariableString(VariableString("charDir"))))
+                            {
+                                VariableString.Append(VariableString("playerABCDir"), VariableString(VariableString("charDir")));
+                                VariableString.Concat("playerName", "```", VariableString("playerName"));
+                                VariableString.Concat("playerCharScraper", "```", VariableString(VariableString("charDir")));
+                                VariableString.Replace("playerName", VariableString("playerCharScraper"), "");
+                            }
+                            VariableInt.Add("ABCCounter", 1);
+                        }
+                        VariableInt.Add("ABCCounterMaster", 1);
+                    }
+                    VariableInt.Add("playerPartCounter", 1);
+                    While(String.StartsWith(VariableString("playerName"), "["))
+                    {
+                        VariableString.Concat("playerName", "```", VariableString("playerName"));
+                        VariableString.Replace("playerName", "```[", "");
+                        VariableString.Concat("playerHexDir", "playerHex", VariableInt("playerPartCounter").ConvertToString())
+                            VariableString.Set(VariableString("playerHexDir"), "")
+                            VariableInt.Set("hexCounterMaster", 0);
+                        While(Int.LessThan(VariableInt("hexCounterMaster"), 6))
+                        {
+                            VariableInt.Set("hexCounter", 0);
+                            While(Int.LessThan(VariableInt("hexCounter"), 22))
+                            {
+                                VariableString.Concat("charDir", "char", VariableInt("hexCounter").ConvertToString());
+                                If(String.StartsWith(VariableString("playerName"), VariableString(VariableString("charDir"))))
                                 {
-                                    VariableFloat.Set("xgreater", VariableFloat(VariableString("xDir")));
-                                    VariableFloat.Add("xgreater", VariableFloat("radius"));
-                                    If(Float.LessThan(VariablePlayer("playerMedic").GetPositionX(), VariableFloat("xgreater")))
+                                    VariableString.Append(VariableString("playerHexDir"), VariableString(VariableString("charDir")));
+                                    VariableString.Concat("playerName", "```", VariableString("playerName"));
+                                    VariableString.Concat("playerCharScraper", "```", VariableString(VariableString("charDir")));
+                                    VariableString.Replace("playerName", VariableString("playerCharScraper"), "");
+                                }
+                                VariableInt.Add("hexCounter", 1);
+                            }
+                            VariableInt.Add("hexCounterMaster", 1);
+                        }
+                        VariableString.Concat("playerName", "```", VariableString("playerName"));
+                        VariableString.Replace("playerName", "```]", "");
+                        VariableString.Concat("playerABCDir", "playerABC", VariableInt("playerPartCounter").ConvertToString())
+                        VariableString.Set(VariableString("playerABCDir"), "")
+                        VariableInt.Set("ABCCounterMaster", 0);
+                        While(Int.LessThan(VariableInt("ABCCounterMaster"), 30))
+                        {
+                            VariableInt.Set("ABCCounter", 0);
+                            While(Int.LessThan(VariableInt("ABCCounter"), 64))
+                            {
+                                VariableString.Concat("charDir", "char", VariableInt("ABCCounter").ConvertToString());
+                                If(String.StartsWith(VariableString("playerName"), VariableString(VariableString("charDir"))))
+                                {
+                                    VariableString.Append(VariableString("playerABCDir"), VariableString(VariableString("charDir")));
+                                    VariableString.Concat("playerName", "```", VariableString("playerName"));
+                                    VariableString.Concat("playerCharScraper", "```", VariableString(VariableString("charDir")));
+                                    VariableString.Replace("playerName", VariableString("playerCharScraper"), "");
+                                }
+                                VariableInt.Add("ABCCounter", 1);
+                            }
+                            VariableInt.Add("ABCCounterMaster", 1);
+                        }
+                        VariableInt.Add("playerPartCounter", 1);
+                    }
+                    //hex stripper --- printable name
+                    VariableString.Set("playerPrintName", "");
+                    VariableInt.Set("printNameCounter", 0);
+                    While(Int.LessThan(VariableInt("printNameCounter"), VariableInt("playerPartCounter")))
+                    {
+                        VariableString.Concat("playerABCDir", "playerABC", VariableInt("printNameCounter").ConvertToString());
+                        VariableString.Concat("playerHexDir", "playerHex", VariableInt("printNameCounter").ConvertToString());
+                        VariableString.Append("playerPrintName", "<color=#");
+                        VariableString.Append("playerPrintName", VariableString(VariableString("playerHexDir")));
+                        VariableString.Append("playerPrintName", ">");
+                        VariableString.Append("playerPrintName", VariableString(VariableString("playerABCDir")));
+                        VariableString.Append("playerPrintName", "</color>");
+                        VariableInt.Add("printNameCounter", 1);
+                    }
+                    VariableString.Concat("currentPlayerPrintableNameDir", VariableString("currentPlayerDir"), "PrintableName");
+                    VariableString.Set(VariableString("currentPlayerPrintableNameDir"), VariableString("playerPrintName"));
+                    //hex stripper --- parsable name
+                    VariableString.Set("playerPrintName", "");
+                    VariableInt.Set("printNameCounter", 0);
+                    While(Int.LessThan(VariableInt("printNameCounter"), VariableInt("playerPartCounter")))
+                    {
+                        VariableString.Concat("playerABCDir", "playerABC", VariableInt("printNameCounter").ConvertToString());
+                        VariableString.Append("playerPrintName", VariableString(VariableString("playerABCDir")));
+                        VariableInt.Add("printNameCounter", 1);
+                    }
+                    VariableString.Concat("currentPlayerParsableNameDir", VariableString("currentPlayerDir"), "ParsableName");
+                    VariableString.Set(VariableString("currentPlayerParsableNameDir"), VariableString("playerPrintName"));
+                }
+                //update coords
+                If(Bool.Equals(VariablePlayer(VariableString("currentPlayerDir")).GetIsAlive(), true))
+                {
+                    VariableFloat.Set(VariableString("currentPlayerXDir"), VariablePlayer(VariableString("currentPlayerDir")).GetPositionX());
+                    VariableFloat.Set(VariableString("currentPlayerYDir"), VariablePlayer(VariableString("currentPlayerDir")).GetPositionY());
+                    VariableFloat.Set(VariableString("currentPlayerZDir"), VariablePlayer(VariableString("currentPlayerDir")).GetPositionZ());
+                }
+                //death timer
+                VariableString.Concat("currentPlayerHasBeenDeadForDir", VariableString("currentPlayerDir"), "HasBeenDeadFor");
+                VariableString.Set("currentPlayerDeathWasAnnouncedDir", VariableString("currentPlayerDir"), "DeathWasAnnounced");
+                VariableString.Concat("currentPlayerIsBeingRevivedDir", VariableString("currentPlayerDir"), "IsBeingRevived");
+                //death marker
+                VariableString.Concat("currentPlayerDeathIsMarkedDir", VariableString("currentPlayerDir"), "DeathIsMarked");
+                //player rejoin revive
+                VariableString.Concat("currentPlayerAttemptToReviveDir", VariableString("currentPlayerDir"), "AttemptToRevive");
+                //if player is alive
+                If(Bool.Equals(VariablePlayer(VariableString("currentPlayerDir")).GetIsAlive(), true))
+                {
+                    //reset player vars
+                    If(Bool.Equals(VariableBool("resetPlayerVarsOnMCRev"), true))
+                    {
+                        If(Int.NotEquals(VariableInt(VariableString("currentPlayerHasBeenDeadForDir")), 0))
+                        {
+                            If(Bool.Equals(VariableBool(VariableString("currentPlayerIsBeingRevivedDir")), false))
+                            {
+                                //medic stats
+                                VariableString.Concat("currentPlayerMedicCooldownDir", VariableString("currentPlayerDir"), "MedicCooldown");
+                                VariableInt.Set(VariableString("currentPlayerMedicCooldownDir"), 0);
+                                VariableString.Concat("currentPlayerReviveChargeDir", VariableString("currentPlayerDir"), "ReviveCharge");
+                                VariableInt.Set(VariableString("currentPlayerReviveChargeDir"), 0);
+                                VariableString.Concat("currentPlayerReviveKitsUsedDir", VariableString("currentPlayerDir"), "ReviveKitsUsed");
+                                VariableInt.Set(VariableString("currentPlayerReviveKitsUsedDir"), 0);
+                                VariableString.Concat("currentPlayerReviveTargetDir", VariableString("currentPlayerDir"), "ReviveTarget");
+                                VariableString.Set(VariableString("currentPlayerReviveTargetDir"), "null");
+                                //player rev stats
+                                VariableString.Concat("currentPlayerIsBeingRevivedDir", VariableString("currentPlayerDir"), "IsBeingRevived");
+                                VariableBool.Set(VariableString("currentPlayerIsBeingRevivedDir"), false);
+                                VariableString.Concat("currentPlayerTimesRevivedByMedicDir", VariableString("currentPlayerDir"), "TimesRevivedByMedic");
+                                VariableInt.Set(VariableString("currentPlayerTimesRevivedByMedicDir"), 0);
+                                VariableString.Concat("currentPlayerHasBeenDeadForDir", VariableString("currentPlayerDir"), "HasBeenDeadFor");
+                                VariableInt.Set(VariableString("currentPlayerHasBeenDeadForDir"), 0);
+                                VariableString.Set("currentPlayerDeathWasAnnouncedDir", VariableString("currentPlayerDir"), "DeathWasAnnounced");
+                                VariableBool.Set(VariableString("currentPlayerDeathWasAnnouncedDir"), true);
+                                VariableString.Concat("currentPlayerDeathIsMarkedDir", VariableString("currentPlayerDir"), "DeathIsMarked");
+                                VariableBool.Set(VariableString("currentPlayerDeathIsMarkedDir"), true);
+                            }
+                        }
+                    }
+                    //death timer
+                    VariableInt.Set(VariableString("currentPlayerHasBeenDeadForDir"), 0);
+                    VariableBool.Set(VariableString("currentPlayerDeathWasAnnouncedDir"), false);
+                    VariableBool.Set(VariableString("currentPlayerIsBeingRevivedDir"), false);
+                    //death marker
+                    VariableBool.Set(VariableString("currentPlayerDeathIsMarkedDir"), false);
+                    //player rejoin revive
+                    VariableBool.Set(VariableString("currentPlayerAttemptToReviveDir"), false);
+                }
+                //if player is dead
+                If(Bool.Equals(VariablePlayer(VariableString("currentPlayerDir")).GetIsAlive(), false))
+                {
+                    //death marker
+                    VariableBool.Set("else", true);
+                    If(Int.LessThan(VariableInt(VariableString("currentPlayerHasBeenDeadForDir")), VariableInt("deathTime")))
+                    {
+                        If(Bool.Equals(VariableBool("deathMarker"), true))
+                        {
+                            If(Bool.Equals(VariableBool(VariableString("currentPlayerDeathIsMarkedDir")), false))
+                            {
+                                //wont mark death of rejoining player
+                                If(Bool.Equals(VariableBool(VariableString("currentPlayerAttemptToReviveDir")), false))
+                                {
+                                    VariableString.Concat("currentPlayerTimesRevivedByMedicDir", VariableString("currentPlayerDir"), "TimesRevivedByMedic");
+                                    If(Int.LessThan(VariableInt(VariableString("currentPlayerTimesRevivedByMedicDir")), VariableInt("defaultLives")))
                                     {
-                                        VariableFloat.Set("xless", VariableFloat(VariableString("xDir")));
-                                        VariableFloat.Subtract("xless", VariableFloat("radius"));
-                                        If(Float.GreaterThan(VariablePlayer("playerMedic").GetPositionX(), VariableFloat("xless")))
+                                        VariableString.Concat("spawnFlareAtPlayerDeathLocation", "EM/Commands/object_spawn[-]Resources[-]flareBullet2[-]", VariableFloat(VariableString("currentPlayerXDir")).ConvertToString(), "[-]", VariableFloat(VariableString("currentPlayerYDir")).ConvertToString(), "[-]", VariableFloat(VariableString("currentPlayerZDir")).ConvertToString(), "[-]", VariableString("flareRotation"));
+                                        Game.PrintMessage(VariableString("spawnFlareAtPlayerDeathLocation"));
+                                        VariableBool.Set(VariableString("currentPlayerDeathIsMarkedDir"), true);
+                                    }
+                                }
+                            }
+                        }
+                        VariableBool.Set("else", false);
+                    }
+                    //death timer
+                    If(Bool.Equals(VariableBool("else"), true))
+                    {
+                        If(Bool.Equals(VariableBool(VariableString("currentPlayerDeathWasAnnouncedDir")), false))
+                        {
+                            VariableString.Concat("currentPlayerPrintableNameDir", VariableString("currentPlayerDir"), "PrintableName");
+                            VariableString.Concat("playerHasBeenLostWhat", VariableString(VariableString("currentPlayerPrintableNameDir")), "<size=10>", VariableString("char63"), "has", VariableString("char63"), "been", VariableString("char63"), "lost</size>");
+                            Game.PrintMessage(VariableString("playerHasBeenLostWhat"));
+                            VariableBool.Set(VariableString("currentPlayerDeathWasAnnouncedDir"), true);
+                        }
+                    }
+                    VariableString.Concat("currentPlayerIsBeingRevivedDir", VariableString("currentPlayerDir"), "IsBeingRevived");
+                    If(Bool.Equals(VariableBool(VariableString("currentPlayerIsBeingRevivedDir")), false))
+                    {
+                        VariableInt.Add(VariableString("currentPlayerHasBeenDeadForDir"), 1);
+                    }
+                    //player rejoin revive
+                    If(Bool.Equals(VariableBool(VariableString("currentPlayerAttemptToReviveDir")), true))
+                    {
+                        Player.SpawnPlayerAt(VariablePlayer(VariableString("currentPlayerDir")), VariableFloat(VariableString("currentPlayerXDir")), VariableFloat(VariableString("currentPlayerYDir")), VariableFloat(VariableString("currentPlayerZDir")));
+                    }
+                }
+                //revive loop
+                VariableString.Concat("currentPlayerIsMedicDir", VariableString("currentPlayerDir"), "IsMedic");
+                //handling player is being revived break
+                //thanks for finding this issue, mara
+                If(Bool.Equals(VariableBool(VariableString("currentPlayerIsMedicDir")), false))
+                {
+                    String.Concat("currentPlayerReviveTargetDir", VariableString("currentPlayerDir"), "ReviveTarget");
+                    If(String.NotEquals(VariableString(VariableString("currentPlayerReviveTargetDir")), "null"))
+                    {
+                        VariableString.Concat("currentPlayerIsBeingRevivedDir", VariableString(VariableString("currentPlayerReviveTargetDir")), "IsBeingRevived");
+                        VariableString.Concat("currentPlayerReviveChargeDir", VariableString("currentPlayerDir"), "ReviveCharge");
+                        VariableBool.Set(VariableString("currentPlayerIsBeingRevivedDir"), false);
+                        VariableInt.Set(VariableString("currentPlayerReviveChargeDir"), 0);
+                    }
+                    //medic stats
+                    VariableString.Concat("currentPlayerMedicCooldownDir", VariableString("currentPlayerDir"), "MedicCooldown");
+                    VariableInt.Set(VariableString("currentPlayerMedicCooldownDir"), 0);
+                    VariableString.Concat("currentPlayerReviveChargeDir", VariableString("currentPlayerDir"), "ReviveCharge");
+                    VariableInt.Set(VariableString("currentPlayerReviveChargeDir"), 0);
+                    VariableString.Concat("currentPlayerReviveKitsUsedDir", VariableString("currentPlayerDir"), "ReviveKitsUsed");
+                    VariableInt.Set(VariableString("currentPlayerReviveKitsUsedDir"), 0);
+                    VariableString.Concat("currentPlayerReviveTargetDir", VariableString("currentPlayerDir"), "ReviveTarget");
+                    VariableString.Set(VariableString("currentPlayerReviveTargetDir"), "null");
+                }
+                If(Bool.Equals(VariableBool(VariableString("currentPlayerIsMedicDir")), true))
+                {
+                    //marking medic as medic
+                    VariableString.Set("currentPlayerGuildName", VariablePlayer(VariableString("currentPlayerDir")).GetGuildName())
+                    If(String.NotContains(VariableString("currentPlayerGuildName"), VariableString("medicHex")))
+                    {
+                        VariableString.Concat("currentPlayerNewGuildName", VariableString("currentPlayerGuildName"), VariableString("medicHex"));
+                        Player.SetGuildName(VariablePlayer(VariableString("currentPlayerDir")), VariableString("currentPlayerNewGuildName"));
+                    }
+                    If(Bool.Equals(VariablePlayer(VariableString("currentPlayerDir")).GetIsAlive(), false))
+                    {
+                        String.Concat("currentPlayerReviveTargetDir", VariableString("currentPlayerDir"), "ReviveTarget");
+                        If(String.NotEquals(VariableString(VariableString("currentPlayerReviveTargetDir")), "null"))
+                        {
+                            VariableString.Concat("currentPlayerIsBeingRevivedDir", VariableString(VariableString("currentPlayerReviveTargetDir")), "IsBeingRevived");
+                            VariableString.Concat("currentPlayerReviveChargeDir", VariableString("currentPlayerDir"), "ReviveCharge");
+                            VariableBool.Set(VariableString("currentPlayerIsBeingRevivedDir"), false);
+                            VariableInt.Set(VariableString("currentPlayerReviveChargeDir"), 0);
+                        }
+                    }
+                    //working cooldown
+                    VariableString.Concat("currentPlayerMedicCooldownDir", VariableString("currentPlayerDir"), "MedicCooldown");
+                    VariableInt.Add(VariableString("currentPlayerMedicCooldownDir"), 1);
+                    //setting medic revive zone
+                    //Xzone
+                    VariableString.Concat("currentPlayerXDir", VariableString("currentPlayerDir"), "X");
+                    VariableFloat.Set("medicReviveZoneXHigh", VariableFloat(VariableString("currentPlayerXDir")));
+                    VariableFloat.Add("medicReviveZoneXHigh", VariableFloat("radius"));
+                    VariableFloat.Set("medicReviveZoneXLow", VariableFloat(VariableString("currentPlayerXDir")));
+                    VariableFloat.Subtract("medicReviveZoneXLow", VariableFloat("radius"));
+                    //Yzone
+                    VariableString.Concat("currentPlayerYDir", VariableString("currentPlayerDir"), "Y");
+                    VariableFloat.Set("medicReviveZoneYHigh", VariableFloat(VariableString("currentPlayerYDir")));
+                    VariableFloat.Add("medicReviveZoneYHigh", VariableFloat("radius"));
+                    VariableFloat.Set("medicReviveZoneYLow", VariableFloat(VariableString("currentPlayerYDir")));
+                    VariableFloat.Subtract("medicReviveZoneYLow", VariableFloat("radius"));
+                    //Zzone
+                    VariableString.Concat("currentPlayerZDir", VariableString("currentPlayerDir"), "Z");
+                    VariableFloat.Set("medicReviveZoneZHigh", VariableFloat(VariableString("currentPlayerZDir")));
+                    VariableFloat.Add("medicReviveZoneZHigh", VariableFloat("radius"));
+                    VariableFloat.Set("medicReviveZoneZLow", VariableFloat(VariableString("currentPlayerZDir")));
+                    VariableFloat.Subtract("medicReviveZoneZLow", VariableFloat("radius"));
+                    //is there rev target
+                    VariableString.Concat("currentPlayerReviveTargetDir", VariableString("currentPlayerDir"), "ReviveTarget");
+                    //there IS NOT rev target
+                    If(String.Equals(VariableString(VariableString("currentPlayerReviveTargetDir")), "null"))
+                    {
+                        //is medic alive
+                        If(Bool.Equals(VariablePlayer(VariableString("currentPlayerDir")).GetIsAlive(), true))
+                        {
+                            //is medic on cooldown
+                            VariableString.Concat("currentPlayerMedicCooldownDir", VariableString("currentPlayerDir"), "MedicCooldown");
+                            If(Int.GreaterThan(VariableInt(VariableString("currentPlayerMedicCooldownDir")), VariableInt("cooldown")))
+                            {
+                                //does medic have revive kits left
+                                VariableString.Concat("currentPlayerReviveKitsUsedDir", VariableString("currentPlayerDir"), "ReviveKitsUsed");
+                                If(Int.NotEquals(VariableInt(VariableString("currentPlayerReviveKitsUsedDir")), VariableInt("defaultReviveKits")))
+                                {
+                                    //looping thru players
+                                    VariableBool.Set("searchingForRevTarget", true);
+                                    VariableInt.Set("i", 0);
+                                    While(Bool.Equals(VariableBool("searchingForRevTarget"), true))
+                                    {
+                                        //setting dead player
+                                        VariableString.Concat("currentDeadPlayerDir", "player", VariableInt("i").ConvertToString());
+                                        //is player in game
+                                        VariableString.Concat("currentPlayerIsInGameDir", VariableString("currentDeadPlayerDir"), "IsInGame");
+                                        If(Bool.Equals(VariableBool(VariableString("currentPlayerIsInGameDir")), true))
                                         {
-                                            VariableFloat.Set("zgreater", VariableFloat(VariableString("zDir")));
-                                            VariableFloat.Add("zgreater", VariableFloat("radius"));
-                                            If(Float.LessThan(VariablePlayer("playerMedic").GetPositionZ(), VariableFloat("zgreater")))
+                                            //is player dead
+                                            If(Bool.Equals(VariablePlayer(VariableString("currentDeadPlayerDir")).GetIsAlive(), false))
                                             {
-                                                VariableFloat.Set("zless", VariableFloat(VariableString("zDir")));
-                                                VariableFloat.Subtract("zless", VariableFloat("radius"));
-                                                If(Float.GreaterThan(VariablePlayer("playerMedic").GetPositionZ(), VariableFloat("zless")))
+                                                //has player died permanently
+                                                VariableString.Concat("currentPlayerHasBeenDeadForDir", VariableString("currentDeadPlayerDir"), "HasBeenDeadFor");
+                                                If(Int.LessThan(VariableInt(VariableString("currentPlayerHasBeenDeadForDir")), VariableInt("deathTime")))
                                                 {
-                                                    VariableInt.Add(VariableString("revDir"), 1);
-                                                    If(Int.Equals(VariableInt(VariableString("revDir")), 1))
+                                                    //has player used up lives
+                                                    VariableString.Concat("currentPlayerTimesRevivedByMedicDir", VariableString("currentDeadPlayerDir"), "TimesRevivedByMedic");
+                                                    If(Int.LessThan(VariableInt(VariableString("currentPlayerTimesRevivedByMedicDir")), VariableInt("defaultLives")))
                                                     {
-                                                        VariableString.Concat("reviveWho", "<size=10>reviving</size><size=1>___</size><size=10>player</size><size=1>___</size><size=10>wait</size><size=1>___</size>","<size=15><color=#ff0000>", VariableInt("revTime").ConvertToString(),"</color></size>", "<size=1>___</size><size=10>seconds</size>");
-                                                        Game.PrintMessage(VariableString("reviveWho"));
-                                                    }
-                                                    If(Int.GreaterThanOrEqual(VariableInt(VariableString("revDir")), VariableInt("revTime")))
-                                                    {
-                                                        Player.SpawnPlayerAt(VariablePlayer("player"), VariablePlayer("playerMedic").GetPositionX(), VariablePlayer("playerMedic").GetPositionY(), VariablePlayer("playerMedic").GetPositionZ());
-                                                        VariableInt.Set(VariableString("revDir"), 0);
-                                                        VariableInt.Set(VariableString("cooldownDirSub"), VariableInt("cooldown"));
+                                                        //is player already being revived
+                                                        VariableString.Concat("currentPlayerIsBeingRevivedDir", VariableString("currentDeadPlayerDir"), "IsBeingRevived");
+                                                        If(Bool.Equals(VariableBool(VariableString("currentPlayerIsBeingRevivedDir")), false))
+                                                        {
+                                                            //is player in medic zone
+                                                            VariableString.Concat("currentDeadPlayerXDir", VariableString("currentDeadPlayerDir"), "X");
+                                                            If(Float.LessThan(VariableFloat(VariableString("currentDeadPlayerXDir")), VariableFloat("medicReviveZoneXHigh")))
+                                                            {
+                                                                If(Float.GreaterThan(VariableFloat(VariableString("currentDeadPlayerXDir")), VariableFloat("medicReviveZoneXLow")))
+                                                                {
+                                                                    VariableString.Concat("currentDeadPlayerYDir", VariableString("currentDeadPlayerDir"), "Y");
+                                                                    If(Float.LessThan(VariableFloat(VariableString("currentDeadPlayerYDir")), VariableFloat("medicReviveZoneYHigh")))
+                                                                    {
+                                                                        If(Float.GreaterThan(VariableFloat(VariableString("currentDeadPlayerYDir")), VariableFloat("medicReviveZoneYLow")))
+                                                                        {
+                                                                            VariableString.Concat("currentDeadPlayerZDir", VariableString("currentDeadPlayerDir"), "Z");
+                                                                            If(Float.LessThan(VariableFloat(VariableString("currentDeadPlayerZDir")), VariableFloat("medicReviveZoneZHigh")))
+                                                                            {
+                                                                                If(Float.GreaterThan(VariableFloat(VariableString("currentDeadPlayerZDir")), VariableFloat("medicReviveZoneZLow")))
+                                                                                {
+                                                                                    VariableString.Set(VariableString("currentPlayerReviveTargetDir"), VariableString("currentDeadPlayerDir"));
+                                                                                    VariableBool.Set(VariableString("currentPlayerIsBeingRevivedDir"), true);
+                                                                                    VariableBool.Set("searchingForRevTarget", false);
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
+                                            }
+                                        }
+                                        //counter
+                                        VariableInt.Add("i", 1);
+                                        If(Bool.Equals(VariableBool("searchingForRevTarget"), true))
+                                        {
+                                            VariableBool.Set("searchingForRevTarget", false);
+                                            If(Int.LessThan(VariableInt("i"), VariableInt("knownPlayerCounter")))
+                                            {
+                                                VariableBool.Set("searchingForRevTarget", true);
                                             }
                                         }
                                     }
@@ -900,21 +1448,88 @@ VariableInt.Set("counterPlayer", 0);
                             }
                         }
                     }
-                    VariableInt.Add("counterPlayerMedic", 1);
-                }  
+                    //there IS rev target
+                    If(String.NotEquals(VariableString(VariableString("currentPlayerReviveTargetDir")), "null"))
+                    {
+                        //setting dead player
+                        VariableString.Concat("currentDeadPlayerDir", VariableString(VariableString("currentPlayerReviveTargetDir")));
+                        VariableBool.Set("playerIsStillTarget", true);
+                        //is player still in medic zone
+                        VariableBool.Set("stillInZone", false);
+                        VariableString.Concat("currentDeadPlayerXDir", VariableString("currentDeadPlayerDir"), "X");
+                        If(Float.LessThan(VariableFloat(VariableString("currentDeadPlayerXDir")), VariableFloat("medicReviveZoneXHigh")))
+                        {
+                            If(Float.GreaterThan(VariableFloat(VariableString("currentDeadPlayerXDir")), VariableFloat("medicReviveZoneXLow")))
+                            {
+                                VariableString.Concat("currentDeadPlayerYDir", VariableString("currentDeadPlayerDir"), "Y");
+                                If(Float.LessThan(VariableFloat(VariableString("currentDeadPlayerYDir")), VariableFloat("medicReviveZoneYHigh")))
+                                {
+                                    If(Float.GreaterThan(VariableFloat(VariableString("currentDeadPlayerYDir")), VariableFloat("medicReviveZoneYLow")))
+                                    {
+                                        VariableString.Concat("currentDeadPlayerZDir", VariableString("currentDeadPlayerDir"), "Z");
+                                        If(Float.LessThan(VariableFloat(VariableString("currentDeadPlayerZDir")), VariableFloat("medicReviveZoneZHigh")))
+                                        {
+                                            If(Float.GreaterThan(VariableFloat(VariableString("currentDeadPlayerZDir")), VariableFloat("medicReviveZoneZLow")))
+                                            {
+                                                VariableBool.Set("stillInZone", true);
+                                                VariableString.Concat("currentPlayerReviveChargeDir", VariableString("currentPlayerDir"), "ReviveCharge");
+                                                If(Int.Equals(VariableInt(VariableString("currentPlayerReviveChargeDir")), 0))
+                                                {
+                                                    VariableString.Concat("currentPlayerPrintableNameDir", VariableString("currentDeadPlayerDir"), "PrintableName");
+                                                    VariableString.Concat("revPlayerWhat", "<size=10>reviving", VariableString("char63"), "</size>", VariableString(VariableString("currentPlayerPrintableNameDir")), "<size=10>", VariableString("char63"), "please", VariableString("char63"), "wait", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("revTime").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>seconds</size>");
+                                                    Game.PrintMessage(VariableString("revPlayerWhat"));
+                                                }
+                                                VariableBool.Set("else", true);
+                                                If(Int.LessThan(VariableInt(VariableString("currentPlayerReviveChargeDir")), VariableInt("revTime")))
+                                                {
+                                                    If(Int.NotEquals(VariableInt(VariableString("currentPlayerReviveChargeDir")), VariableInt("revTime")))
+                                                    {
+                                                        VariableInt.Add(VariableString("currentPlayerReviveChargeDir"), 1);
+                                                    }
+                                                    VariableBool.Set("else", false);
+                                                }
+                                                If(Bool.Equals(VariableBool("else"), true))
+                                                {
+                                                    Player.SpawnPlayerAt(VariablePlayer(VariableString("currentDeadPlayerDir")), VariableFloat(VariableString("currentPlayerXDir")), VariableFloat(VariableString("currentPlayerYDir")), VariableFloat(VariableString("currentPlayerZDir")));
+                                                    VariableInt.Add(VariableString("currentPlayerReviveKitsUsedDir"), 1);
+                                                    VariableInt.Add(VariableString("currentPlayerTimesRevivedByMedicDir"), 1);
+                                                    VariableInt.Set(VariableString("currentPlayerMedicCooldownDir"), 0);
+                                                    //would set playerIsStillTarget to false, but i need playerisbeingrevived for mc rev stat reset
+                                                    VariableInt.Set(VariableString("currentPlayerReviveChargeDir"), 0);
+                                                    VariableString.Set(VariableString("currentPlayerReviveTargetDir"), "null");
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        If(Bool.Equals(VariableBool("stillInZone"), false))
+                        {
+                            VariableBool.Set("playerIsStillTarget", false);
+                        }
+                        If(Bool.Equals(VariablePlayer(VariableString("currentPlayerDir")).GetIsAlive(), false))
+                        {
+                            VariableBool.Set("playerIsStillTarget", false);
+                        }
+                        If(Bool.Equals(VariableBool("playerIsStillTarget"), false))
+                        {
+                            VariableInt.Set(VariableString("currentPlayerReviveChargeDir"), 0);
+                            VariableString.Set(VariableString("currentPlayerReviveTargetDir"), "null");
+                            VariableBool.Set(VariableString("currentPlayerIsBeingRevivedDir"), false);
+                        }
+                    }
+                }
             }
-            If(Int.Equals(VariableInt(VariableString("deathDir")), VariableInt("deathTime")))
-            {
-            Game.PrintMessage("<size=10>a</size><size=1>___</size><size=10>soldier</size><size=1>___</size><size=10>has</size><size=1>___</size><size=10>been</size><size=1>___</size><size=10>lost</size>")
-            }
-            VariableInt.Add(VariableString("deathDir"), 1);
+            //counter
+            VariableInt.Add("knownPlayerUpdateLoopCounter", 1);
         }
-        VariableInt.Add("counterPlayer", 1);
-        VariableInt.Subtract(VariableString("cooldownDirMain"), 1);
     }
-    VariableInt.Add("counterMain", 1);
 
-}
+    //-------Global Counter--------
+    VariableInt.Add("timeCounter", 1);
+    //Game.PrintMessage(VariableInt("timeCounter").ConvertToString());
+
 }
 
 
@@ -2174,36 +2789,206 @@ If(String.Equals(VariableString("input"),"/rocks"))
 Game.PrintMessage("EM/Commands/moveobjects[-]RockTrap[-]-8085[-]1200[-]56316[-]0[-]90[-]0[-]-4[-]0[-]0");
 }
 
-
-// Medic
-    If(String.StartsWith(VariableString("input"), "/medic"))
+// V11 MEDIC OVERHAUL
+    //----------Init--------------
+    If(String.StartsWith(VariableString("input"), "/init"))
     {
-        VariableString.Remove("input", "/medic");
-        VariablePlayer.Set("player", VariablePlayer("null"));
-        ForeachPlayer("player")
+        VariableString.Set("char63", VariableString("input"));
+        VariableString.Replace("char63", "/init", "");
+        VariableBool.Set("runScript", true);
+    }
+    //-----hex stripper test--------
+    If(String.StartsWith(VariableString("input"), "/players"))
+    {
+        VariableInt.Set("i", 0);
+        While(Int.LessThan(VariableInt("i"), VariableInt("knownPlayerCounter")))
         {
-            VariableBool.Set("passNotMedic", false);
-            If(String.Contains(VariablePlayer("player").GetName(), VariableString("input")))
+            VariableString.Concat("currentPlayerDir", "player", VariableInt("i").ConvertToString());
+            VariableString.Concat("currentPlayerIsInGameDir", VariableString("currentPlayerDir"), "IsInGame");
+            If(Bool.Equals(VariableBool(VariableString("currentPlayerIsInGameDir")), true))
             {
-                If(String.NotEquals(VariablePlayer("player").GetGuildName(), "[ffffff][ffffff]Medic"))
-                {
-                    Player.SetGuildName(VariablePlayer("player"), "[ffffff][ffffff]Medic");
-                    VariableString.Concat("AM", VariableString("input"), "_is_now_medic");
-                    Game.PrintMessage(VariableString("AM"));
-                    VariableBool.Set("passNotMedic", true);
-                }
-                If(Bool.Equals(VariableBool("passNotMedic"), false))
-                {
-                    If(String.Equals(VariablePlayer("player").GetGuildName(), "[ffffff][ffffff]Medic"))
-                    {
-                        Player.SetGuildName(VariablePlayer("player"), "");
-                        VariableString.Concat("ANM", VariableString("input"), "_is_not_medic");
-                        Game.PrintMessage(VariableString("ANM"));
-                    }
-                }  
-            }  
+                VariableString.Concat("currentPlayerPrintableNameDir", VariableString("currentPlayerDir"), "PrintableName");
+                Game.PrintMessage(VariableString(VariableString("currentPlayerPrintableNameDir")));
+            }
+            VariableInt.Add("i", 1);
         }
     }
+    //---------Add or Remove Medic--------
+    If(String.StartsWith(VariableString("input"), "/medic"))
+    {
+        VariableString.Concat("medicStripper", "/medic", VariableString("char63"));
+        VariableString.Replace("input", VariableString("medicStripper"), "");
+        VariableInt.Set("i", 0);
+        While(Int.LessThan(VariableInt("i"), VariableInt("knownPlayerCounter")))
+        {
+            VariableString.Concat("currentPlayerDir", "player", VariableInt("i").ConvertToString());
+            VariableString.Concat("currentPlayerParsableNameDir", VariableString("currentPlayerDir"), "ParsableName");
+            If(String.Contains(VariableString(VariableString("currentPlayerParsableNameDir")), VariableString("input")))
+            {
+                VariableString.Concat("currentPlayerIsMedicDir", VariableString("currentPlayerDir"), "IsMedic");
+                VariableString.Concat("currentPlayerPrintableNameDir", VariableString("currentPlayerDir"), "PrintableName");
+                VariableBool.Set("else", true);
+                If(Bool.Equals(VariableBool(VariableString("currentPlayerIsMedicDir")), true))
+                {
+                    VariableBool.Set(VariableString("currentPlayerIsMedicDir"), false);
+                    VariableString.Set("currentPlayerNewGuildName", VariablePlayer(VariableString("currentPlayerDir")).GetGuildName());
+                    VariableString.Replace("currentPlayerNewGuildName", VariableString("medicHex"), "");
+                    Player.SetGuildName(VariablePlayer(VariableString("currentPlayerDir")), VariableString("currentPlayerNewGuildName"));
+                    VariableBool.Set("else", false);
+                    VariableString.Concat("isMedicWhat", VariableString(VariableString("currentPlayerPrintableNameDir")), VariableString("char63"), "is", VariableString("char63"), "no", VariableString("char63"), "longer", VariableString("char63"), "medic!");
+                }
+                If(Bool.Equals(VariableBool("else"), true))
+                {
+                    VariableBool.Set(VariableString("currentPlayerIsMedicDir"), true);
+                    VariableString.Concat("currentPlayerNewGuildName", VariablePlayer(VariableString("currentPlayerDir")).GetGuildName(), VariableString("medicHex"));
+                    Player.SetGuildName(VariablePlayer(VariableString("currentPlayerDir")), VariableString("currentPlayerNewGuildName"));
+                    VariableString.Concat("isMedicWhat", VariableString(VariableString("currentPlayerPrintableNameDir")), VariableString("char63"), "is", VariableString("char63"), "now", VariableString("char63"), "medic!");
+                }
+                Game.PrintMessage(VariableString("isMedicWhat"));
+            }
+            //counter
+            VariableInt.Add("i", 1);
+        }
+    }
+    //--------Medic Variables----------
+    //view settings
+    If(String.Equals(VariableString("input"), "/showmedicsettings"))
+    {
+        VariableString.Concat("livesWhat", "<size=10>default", VariableString("char63"), "lives:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("defaultLives").ConvertToString(), "</color></size>");
+        VariableString.Concat("kitsWhat", "<size=10>default", VariableString("char63"), "revive", VariableString("char63"), "kits:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("defaultReviveKits").ConvertToString(), "</color></size>");
+        VariableString.Concat("livesandkits", VariableString("livesWhat"), VariableString("char63"), VariableString("char63"), VariableString("char63"), VariableString("kitsWhat"));
+        Game.PrintMessage(VariableString("livesandkits"));
+        VariableString.Concat("cooldownWhat", "<size=10>cooldown", VariableString("char63"), "time:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("cooldown").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>seconds</size>");
+        VariableString.Concat("revTimeWhat", "<size=10>revive", VariableString("char63"), "time:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("revTime").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>seconds</size>");
+        VariableString.Concat("cooldownandrev", VariableString("cooldownWhat"), VariableString("char63"), VariableString("char63"), VariableString("char63"), VariableString("revTimeWhat"));
+        Game.PrintMessage(VariableString("cooldownandrev"));
+        VariableString.Concat("deathWhat", "<size=10>death", VariableString("char63"), "time:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("deathTime").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>seconds</size>");
+        VariableString.Concat("radiusWhat", "<size=10>revive", VariableString("char63"), "radius:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableFloat("radius").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>units</size>");
+        VariableString.Concat("deathandradius", VariableString("deathWhat"), VariableString("char63"), VariableString("char63"), VariableString("char63"), VariableString("radiusWhat"));
+        Game.PrintMessage(VariableString("deathandradius"));
+        //view deathmarkerVariableBool.Set("deathmarkerdisabled", false);
+        VariableBool.Set("else", true);
+        If(Bool.Equals(VariableBool("deathMarker"), true))
+        {
+            VariableString.Concat("deathMarkersMsg", "<size=10>death", VariableString("char63"), "markers", VariableString("char63"), "enabled</size>");
+            VariableBool.Set("else", false);
+        }
+        If(Bool.Equals(VariableBool("else"), true))
+        {
+            If(Bool.Equals(VariableBool("deathMarker"), false))
+            {
+                VariableString.Concat("deathMarkersMsg", "<size=10>death", VariableString("char63"), "markers", VariableString("char63"), "disabled</size>");
+            }
+        }
+        //view reset vars on mc rev
+        VariableBool.Set("else", true);
+        If(Bool.Equals(VariableBool("resetPlayerVarsOnMCRev"), true))
+        {
+            VariableString.Concat("resetPlayerVarsMsg", "<size=10>will", VariableString("char63"), "reset", VariableString("char63"), "player", VariableString("char63"), "vars", VariableString("char63"), "on", VariableString("char63"), "MC", VariableString("char63"), "revive</size>");
+            VariableBool.Set("else", false);
+        }
+        If(Bool.Equals(VariableBool("else"), true))
+        {
+            If(Bool.Equals(VariableBool("resetPlayerVarsOnMCRev"), false))
+            {
+                VariableString.Concat("resetPlayerVarsMsg", "<size=10>will", VariableString("char63"), "not", VariableString("char63"), "reset", VariableString("char63"), "player", VariableString("char63"), "vars", VariableString("char63"), "on", VariableString("char63"), "MC", VariableString("char63"), "revive</size>");
+            }
+        }
+        //concat and print
+        VariableString.Concat("deathMarkerAndMCRev", VariableString("deathMarkersMsg"), VariableString("char63"), VariableString("char63"), VariableString("char63"), VariableString("resetPlayerVarsMsg"));
+        Game.PrintMessage(VariableString("deathMarkerAndMCRev"));
+    }
+    //default lives
+    If(String.StartsWith(VariableString("input"), "/lives"))
+    {
+        VariableString.Remove("input", "/lives");
+        VariableInt.Set("defaultLives", VariableString("input").ConvertToInt());
+        VariableString.Concat("livesWhat", "<size=10>default", VariableString("char63"), "lives:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("defaultLives").ConvertToString(), "</color></size>");
+        Game.PrintMessage(VariableString("livesWhat"));
+    }
+    //default medic kits
+    If(String.StartsWith(VariableString("input"), "/kits"))
+    {
+        VariableString.Remove("input", "/kits");
+        VariableInt.Set("defaultReviveKits", VariableString("input").ConvertToInt());
+        VariableString.Concat("kitsWhat", "<size=10>default", VariableString("char63"), "revive", VariableString("char63"), "kits:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("defaultReviveKits").ConvertToString(), "</color></size>");
+        Game.PrintMessage(VariableString("kitsWhat"));
+    }
+    //cooldown
+    If(String.StartsWith(VariableString("input"), "/cooldown"))
+    {
+        VariableString.Remove("input", "/cooldown");
+        VariableInt.Set("cooldown", VariableString("input").ConvertToInt());
+        VariableString.Concat("cooldownWhat", "<size=10>cooldown", VariableString("char63"), "time:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("cooldown").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>seconds</size>");
+        Game.PrintMessage(VariableString("cooldownWhat"));
+    }
+    //revive time
+    If(String.StartsWith(VariableString("input"), "/revtime"))
+    {
+        VariableString.Remove("input", "/revtime");
+        VariableInt.Set("revTime", VariableString("input").ConvertToInt());
+        VariableString.Concat("revTimeWhat", "<size=10>revive", VariableString("char63"), "time:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("revTime").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>seconds</size>");
+        Game.PrintMessage(VariableString("revTimeWhat"));
+    }
+    //death timer
+    If(String.StartsWith(VariableString("input"), "/deathtime"))
+    {
+        VariableString.Remove("input", "/deathtime");
+        VariableInt.Set("deathTime", VariableString("input").ConvertToInt());
+        VariableString.Concat("deathWhat", "<size=10>death", VariableString("char63"), "time:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableInt("deathTime").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>seconds</size>");
+        Game.PrintMessage(VariableString("deathWhat"));
+    }
+    //revive "radius"
+    If(String.StartsWith(VariableString("input"), "/revradius"))
+    {
+        VariableString.Remove("input", "/revradius");
+        VariableFloat.Set("radius", VariableString("input").ConvertToInt().ConvertToFloat());
+        VariableString.Concat("radiusWhat", "<size=10>revive", VariableString("char63"), "radius:", VariableString("char63"), "</size><size=12><color=#ff4444>", VariableFloat("radius").ConvertToString(), "</color></size>", VariableString("char63"), "<size=10>units</size>");
+        Game.PrintMessage(VariableString("radiusWhat"));
+    }
+    //deathmarkers
+    If(String.StartsWith(VariableString("input"), "/deathmarker"))
+    {
+        VariableBool.Set("else", true);
+        If(Bool.Equals(VariableBool("deathMarker"), true))
+        {
+            VariableBool.Set("deathMarker", false);
+            VariableString.Concat("deathMarkersMsg", "<size=10>death", VariableString("char63"), "markers", VariableString("char63"), "disabled</size>");
+            Game.PrintMessage(VariableString("deathMarkersMsg"));
+            VariableBool.Set("else", false);
+        }
+        If(Bool.Equals(VariableBool("else"), true))
+        {
+            If(Bool.Equals(VariableBool("deathMarker"), false))
+            {
+                VariableBool.Set("deathMarker", true);
+                VariableString.Concat("deathMarkersMsg", "<size=10>death", VariableString("char63"), "markers", VariableString("char63"), "enabled</size>");
+                Game.PrintMessage(VariableString("deathMarkersMsg"));
+            }
+        }
+    }
+    //reset player vars on mc rev
+    If(String.StartsWith(VariableString("input"), "/resetonmcrev"))
+    {
+        VariableBool.Set("else", true);
+        If(Bool.Equals(VariableBool("resetPlayerVarsOnMCRev"), true))
+        {
+            VariableBool.Set("resetPlayerVarsOnMCRev", false);
+            VariableString.Concat("resetPlayerVarsMsg", "<size=10>will", VariableString("char63"), "not", VariableString("char63"), "reset", VariableString("char63"), "player", VariableString("char63"), "variables", VariableString("char63"), "on", VariableString("char63"), "MC", VariableString("char63"), "revive</size>");
+            Game.PrintMessage(VariableString("resetPlayerVarsMsg"));
+            VariableBool.Set("else", false);
+        }
+        If(Bool.Equals(VariableBool("else"), true))
+        {
+            If(Bool.Equals(VariableBool("resetPlayerVarsOnMCRev"), false))
+            {
+                VariableBool.Set("resetPlayerVarsOnMCRev", true);
+                VariableString.Concat("resetPlayerVarsMsg", "<size=10>will", VariableString("char63"), "reset", VariableString("char63"), "player", VariableString("char63"), "variables", VariableString("char63"), "on", VariableString("char63"), "MC", VariableString("char63"), "revive</size>");
+                Game.PrintMessage(VariableString("resetPlayerVarsMsg"));
+            }
+        }
+    }
+
 
 // ADD MAP SPECIFIC LOGIC HERE
 // Here are a few examples
